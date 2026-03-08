@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="description" content="Mini Studio Pro - Aplikasi Musik Virtual Modern.">
+<title>Mini Studio Pro - Modern Edition</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+<style>
+/* ===== GLOBAL STYLING MODERN ===== */
+:root {
+    --bg-dark: #0f1218;
+    --glass: rgba(255, 255, 255, 0.07);
+    --glass-border: rgba(255, 255, 255, 0.15);
+    --neon-cyan: #00f3ff;
+    --neon-pink: #ff0055;
+    --neon-purple: #bc13fe;
+    --text-main: #e0e0e0;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body{
+    margin:0;
+    font-family: 'Poppins', sans-serif;
+    background: var(--bg-dark);
+    color: var(--text-main);
+    text-align:center;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* Latar Belakang Animasi (Pengisi Ruang) */
+.bg-animation {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: -1;
+    overflow: hidden;
+    background: radial-gradient(circle at 50% 50%, #1a1f2c 0%, #0f1218 100%);
+}
+
+/* Nota Musik Melayang */
+.floating-note {
+    position: absolute;
+    color: rgba(255, 255, 255, 0.05);
+    font-size: 40px;
+    animation: floatUp linear infinite;
+    z-index: 0;
+    pointer-events: none;
+}
+@keyframes floatUp {
+    0% { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+}
+
+h1{
+    position: relative;
+    padding: 40px 10px 10px;
+    font-size: 2.2em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    background: linear-gradient(to right, #fff, var(--neon-cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    z-index: 1;
+}
+
+.subtitle { font-size: 0.9em; color: #888; margin-bottom: 20px; z-index: 1; position: relative; }
+
+#visualizer { width: 100%; max-width: 800px; height: 80px; margin: 0 auto 10px; opacity: 0.8; z-index: 1; position: relative; }
+
+.section{
+    position: relative;
+    margin: 20px auto;
+    padding: 25px;
+    max-width: 950px;
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255,255,255,0.1);
+    z-index: 1;
+    overflow: hidden;
+}
+
+/* Garis dekoratif di pojok section */
+.section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100px; height: 2px;
+    background: linear-gradient(90deg, var(--neon-cyan), transparent);
+}
+.section::after {
+    content: '';
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 100px; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--neon-pink));
+}
+
+h3 {
+    margin-top: 0; font-size: 1.1em; font-weight: 600; color: white;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+h3 img { width: 24px; height: 24px; filter: drop-shadow(0 0 5px currentColor); }
+
+/* ===== PIANO STYLING GLOW ===== */
+.piano-wrapper {
+    position: relative;
+    overflow-x: auto;
+    width: 100%;
+    padding-bottom: 10px;
+    cursor: grab;
+    user-select: none;
+    scrollbar-width: thin;
+    scrollbar-color: var(--neon-cyan) #222;
+}
+.piano-wrapper::-webkit-scrollbar { height: 6px; }
+.piano-wrapper::-webkit-scrollbar-track { background: #222; border-radius: 10px; }
+.piano-wrapper::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 10px; }
+
+.piano-container {
+    position: relative;
+    height: 180px;
+    display: flex;
+    justify-content: flex-start;
+    min-width: max-content;
+    padding: 0 10px;
+    background: linear-gradient(180deg, #111 0%, #000 100%);
+    border-radius: 12px;
+    border-bottom: 4px solid #333;
+}
+
+.white-key {
+    width: 40px;
+    height: 100%;
+    background: linear-gradient(180deg, #fafafa 0%, #e0e0e0 100%);
+    border: 1px solid #ccc;
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 5px;
+    font-size: 9px;
+    color: #888;
+    font-weight: bold;
+    margin-right: 1px;
+    transition: all 0.1s;
+    touch-action: manipulation;
+}
+
+/* Efek Tekan & Glow Putih */
+.white-key:active, .white-key.active {
+    background: #fff;
+    transform: perspective(500px) rotateX(-2deg) translateY(2px);
+    box-shadow: 0 0 25px var(--neon-cyan), 0 0 50px rgba(0, 243, 255, 0.2);
+    border-color: var(--neon-cyan);
+}
+.white-key.active span { color: var(--neon-cyan); }
+
+.black-key {
+    position: absolute;
+    top: 0;
+    width: 24px;
+    height: 55%;
+    background: linear-gradient(180deg, #444 0%, #111 100%);
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.8), inset 0 -1px 2px rgba(255,255,255,0.1);
+    z-index: 2;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+/* Efek Tekan & Glow Hitam */
+.black-key:active, .black-key.active {
+    background: #222;
+    transform: perspective(500px) rotateX(-2deg) translateY(1px);
+    box-shadow: 0 0 20px var(--neon-pink), 0 0 40px rgba(255, 0, 85, 0.3);
+}
+
+/* ===== KALIMBA & DRUM ===== */
+.kalimba-container {
+    display: flex; justify-content: center; flex-wrap: wrap;
+    background: #1a1a24; padding: 20px; border-radius: 15px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+.kalimba-key {
+    width: 28px; height: 100px; margin: 3px;
+    background: linear-gradient(90deg, #bbb, #fff, #bbb);
+    border-radius: 3px;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.4);
+    cursor: pointer;
+    display: flex; align-items: flex-end; justify-content: center;
+    color: #333; font-size: 9px; font-weight: bold; padding-bottom: 5px;
+    transition: transform 0.1s;
+    touch-action: manipulation;
+}
+.kalimba-key:active { 
+    transform: translateY(4px); 
+    background: #fff;
+    box-shadow: 0 0 10px var(--neon-purple);
+}
+
+/* Controls */
+.mixer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; }
+.mixer-item {
+    background: rgba(0,0,0,0.3);
+    padding: 15px;
+    border-radius: 15px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+.mixer-item label { font-size: 0.85em; color: #aaa; display: block; margin-bottom: 10px; }
+.mixer-item .icon { font-size: 24px; margin-bottom: 5px; display: block; }
+
+input[type=range] {
+    -webkit-appearance: none; width: 100%; height: 4px;
+    background: linear-gradient(90deg, #333, #444);
+    border-radius: 2px; outline: none;
+}
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 18px; height: 18px;
+    background: white;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 10px var(--neon-cyan), 0 0 20px rgba(0, 243, 255, 0.3);
+    border: 2px solid var(--neon-cyan);
+}
+
+button.main-btn{
+    padding: 12px 24px; border: none; border-radius: 50px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white; font-weight: 600; font-size: 13px;
+    cursor: pointer; transition: all 0.2s; margin: 4px;
+    backdrop-filter: blur(5px);
+}
+button.main-btn:hover { 
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+button.main-btn:active { transform: scale(0.95); }
+button.main-btn.record-btn { 
+    background: linear-gradient(135deg, var(--neon-pink), #ff4d4d); 
+    border: none; 
+    box-shadow: 0 4px 15px rgba(255, 0, 85, 0.3);
+}
+
+.transpose-control {
+    display: inline-flex; align-items: center;
+    background: rgba(0,0,0,0.3); padding: 5px 15px; border-radius: 20px;
+    margin-bottom: 15px; font-size: 0.9em;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.transpose-control button {
+    background: rgba(255,255,255,0.1); border: none; color: white;
+    width: 28px; height: 28px; border-radius: 50%; cursor: pointer; margin: 0 10px; font-weight: bold;
+    transition: 0.2s;
+}
+.transpose-control button:hover { background: var(--neon-cyan); color: #000; }
+
+select { padding: 10px; border-radius: 8px; border: 1px solid #444; background: #222; color: white; }
+
+#key-hint { position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 10px; font-size: 12px; color: #888; display: none; border: 1px solid #333; }
+@media (min-width: 800px) { #key-hint { display: block; } }
+@media (max-width: 600px) { 
+    h1 { font-size: 1.5em; }
+    .white-key { width: 32px; }
+    .black-key { width: 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Latar Belakang Animasi -->
+<div class="bg-animation" id="bgAnim"></div>
+
+<h1>🎵 Mini Studio Pro</h1>
+<p class="subtitle">Modern Virtual Music Studio</p>
+
+<canvas id="visualizer"></canvas>
+
+<div class="section">
+    <!-- Ikon SVG langsung dimasukkan -->
+    <h3>🎹 Piano <span style="font-weight:300; opacity:0.7; font-size:0.8em">(Scroll for more)</span></h3>
+    <div class="transpose-control">
+        Octave: <button onclick="transposePiano(-1)">-</button>
+        <span id="pianoTransposeVal">0</span>
+        <button onclick="transposePiano(1)">+</button>
+    </div>
+    <div class="piano-wrapper" id="pianoWrapper">
+        <div class="piano-container" id="pianoContainer"></div>
+    </div>
+</div>
+
+<div class="section">
+    <h3>🥁 Drum Machine</h3>
+    <div style="display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap;">
+        Tempo: <select id="tempo">
+            <option value="60">60 BPM</option><option value="90">90 BPM</option>
+            <option value="120" selected>120 BPM</option><option value="150">150 BPM</option>
+        </select>
+        <button class="main-btn" onclick="startBeat()">▶ Play</button>
+        <button class="main-btn" onclick="stopBeat()">⏹ Stop</button>
+    </div>
+</div>
+
+<div class="section">
+    <h3>🎵 Kalimba</h3>
+    <div class="transpose-control">
+        Tone: <button onclick="transposeKalimba(-1)">-</button>
+        <span id="kalimbaTransposeVal">0</span>
+        <button onclick="transposeKalimba(1)">+</button>
+    </div>
+    <div class="kalimba-container" id="kalimbaContainer"></div>
+</div>
+
+<div class="section">
+    <h3>🎛 Mixer & FX</h3>
+    <div class="mixer-grid">
+        <div class="mixer-item">
+            <span class="icon">🔊</span>
+            <label>Master</label>
+            <input type="range" min="0" max="1" step="0.01" value="0.85" id="masterVol">
+        </div>
+        <div class="mixer-item">
+            <span class="icon">🌀</span>
+            <label>Reverb</label>
+            <!-- Nilai default 0.25 untuk gema halus -->
+            <input type="range" min="0" max="0.8" step="0.01" value="0.25" id="reverbMix">
+        </div>
+        <div class="mixer-item">
+            <span class="icon">🎹</span>
+            <label>Piano</label>
+            <input type="range" min="0" max="1" step="0.01" value="0.8" id="pianoVol">
+        </div>
+        <div class="mixer-item">
+            <span class="icon">🥁</span>
+            <label>Beat</label>
+            <input type="range" min="0" max="1" step="0.01" value="0.7" id="beatVol">
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <h3>🎤 Recorder</h3>
+    <button class="main-btn record-btn" onclick="startRecording()">⏺ Record</button>
+    <button class="main-btn" onclick="stopRecording()">⏹ Stop</button>
+    <button class="main-btn" onclick="playRecording()">▶ Play</button>
+    <button class="main-btn" onclick="downloadRecording()">💾 Save</button>
+</div>
+
+<div id="key-hint">💻 Tip: Scroll mouse di atas piano untuk geser</div>
+
+<script>
+// ===== AUDIO ENGINE =====
+let audioCtx, masterGain, delayNode, feedbackGain, dryGain, wetGain, analyser;
+let recordedChunks=[], mediaRecorder, audioBlob;
+let beatInterval;
+let transposeOffsetPiano = 0;
+let transposeOffsetKalimba = 0;
+
+function initAudio() {
+    if (audioCtx) return;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    masterGain = audioCtx.createGain();
+    
+    masterGain.connect(analyser);
+    analyser.connect(audioCtx.destination);
+
+    // Reverb/Delay Setup (Optimized for "Not too dry, not too echoey")
+    delayNode = audioCtx.createDelay(1.0);
+    feedbackGain = audioCtx.createGain();
+    dryGain = audioCtx.createGain();
+    wetGain = audioCtx.createGain();
+
+    dryGain.connect(masterGain);
+    wetGain.connect(delayNode);
+    delayNode.connect(feedbackGain);
+    feedbackGain.connect(delayNode);
+    delayNode.connect(masterGain);
+
+    // Pengaturan Gema Alami
+    delayNode.delayTime.value = 0.5;   // Waktu delay (simulasi ruangan)
+    feedbackGain.gain.value = 0.15;    // Feedback rendah agar tidak membesar terus
+    
+    updateMixer();
+    drawVisualizer();
+}
+
+function resumeAudio() {
+    initAudio();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+// ===== VISUALIZER =====
+const canvas = document.getElementById('visualizer');
+const ctx = canvas.getContext('2d');
+
+function drawVisualizer() {
+    if (!analyser) return;
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    canvas.width = window.innerWidth;
+    canvas.height = 80;
+
+    function draw() {
+        requestAnimationFrame(draw);
+        analyser.getByteFrequencyData(dataArray);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Spacing lebih lebar
+        const barWidth = (canvas.width / bufferLength) * 2.5;
+        let x = 0;
+        
+        for(let i = 0; i < bufferLength; i++) {
+            let barHeight = dataArray[i] / 2.5;
+            
+            // Gradien warna lebih modern
+            const hue = i / bufferLength * 360;
+            const saturation = 100;
+            const lightness = 50 + (dataArray[i]/255) * 20;
+            
+            ctx.fillStyle = `hsla(${hue}, ${saturation}%, ${lightness}%, 0.8)`;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = `hsl(${hue}, 100%, 50%)`;
+            
+            ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+            x += barWidth + 2;
+        }
+    }
+    draw();
+}
+
+// ===== SYNTH SOUNDS =====
+function playPianoNote(freq, keyElem) {
+    resumeAudio();
+    let now = audioCtx.currentTime;
+    let vol = document.getElementById("pianoVol").value;
+
+    // Animasi UI
+    if(keyElem) {
+        keyElem.classList.add('active');
+        setTimeout(() => keyElem.classList.remove('active'), 150);
+    }
+
+    // Audio Nodes
+    const env = audioCtx.createGain();
+    env.gain.setValueAtTime(0, now);
+    env.gain.linearRampToValueAtTime(vol, now + 0.01);
+    env.gain.exponentialRampToValueAtTime(0.001, now + 2.0); // Sustain sedikit lebih lama
+
+    // Routing: Dry (Langsung) + Wet (Gema)
+    env.connect(dryGain);
+    env.connect(wetGain);
+
+    // Oscillator 1 (Main)
+    const osc1 = audioCtx.createOscillator();
+    osc1.type = 'triangle';
+    osc1.frequency.value = freq;
+    osc1.connect(env);
+    osc1.start(now);
+    osc1.stop(now + 2.5);
+
+    // Oscillator 2 (Harmonic)
+    const osc2 = audioCtx.createOscillator();
+    osc2.type = 'sine';
+    osc2.frequency.value = freq * 2;
+    const g2 = audioCtx.createGain();
+    g2.gain.value = 0.15; // Campuran harmonik
+    osc2.connect(g2);
+    g2.connect(env);
+    osc2.start(now);
+    osc2.stop(now + 2.5);
+}
+
+function playKalimbaNote(freq) {
+    resumeAudio();
+    let now = audioCtx.currentTime;
+    let vol = document.getElementById("pianoVol").value; // Re-use piano vol
+
+    let osc = audioCtx.createOscillator();
+    let gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    
+    // Kalimba Pluck
+    gain.gain.setValueAtTime(vol * 1.5, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+
+    osc.connect(gain);
+    gain.connect(dryGain);
+    gain.connect(wetGain);
+    osc.start(now);
+    osc.stop(now + 2);
+}
+
+// ===== DECORATIVE BACKGROUND (Floating Notes) =====
+function createFloatingNotes() {
+    const container = document.getElementById('bgAnim');
+    const notes = ['♪', '♫', '♬', '♩', '𝄞'];
+    
+    setInterval(() => {
+        const note = document.createElement('div');
+        note.classList.add('floating-note');
+        note.innerText = notes[Math.floor(Math.random() * notes.length)];
+        
+        // Random position
+        note.style.left = Math.random() * 100 + 'vw';
+        note.style.fontSize = (Math.random() * 30 + 20) + 'px';
+        note.style.animationDuration = (Math.random() * 10 + 10) + 's';
+        
+        container.appendChild(note);
+        
+        // Remove after animation
+        setTimeout(() => {
+            note.remove();
+        }, 20000);
+    }, 800); // Buat note baru setiap 800ms
+}
+
+// ===== INSTRUMENT GENERATORS =====
+const notesBase = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const keyboardMap = {
+    'a': 0, 'w': 1, 's': 2, 'e': 3, 'd': 4, 'f': 5, 't': 6, 'g': 7, 
+    'y': 8, 'h': 9, 'u': 10, 'j': 11, 'k': 12, 'o': 13, 'l': 14, 'p': 15
+};
+
+function createPiano() {
+    const container = document.getElementById('pianoContainer');
+    container.innerHTML = '';
+    
+    const startOctave = 3;
+    const totalNotes = 25;
+    
+    let whiteKeyCount = 0;
+    
+    for (let i = 0; i < totalNotes; i++) {
+        let noteIndex = i % 12;
+        let octave = startOctave + Math.floor(i / 12);
+        let noteName = notesBase[noteIndex];
+        
+        if (!noteName.includes('#')) {
+            let freq = 130.81 * Math.pow(2, (i + transposeOffsetPiano)/12);
+            let key = document.createElement('div');
+            key.className = 'white-key';
+            key.dataset.note = i;
+            key.innerHTML = `<span>${noteName}</span>`;
+            
+            // Mouse/Touch Events
+            key.onmousedown = key.ontouchstart = (e) => {
+                e.stopPropagation(); 
+                playPianoNote(freq, key);
+            };
+            
+            container.appendChild(key);
+            whiteKeyCount++;
+        }
+    }
+    
+    let whiteWidth = 40;
+    for (let i = 0; i < totalNotes; i++) {
+        let noteIndex = i % 12;
+        let noteName = notesBase[noteIndex];
+        
+        if (noteName.includes('#')) {
+            let freq = 130.81 * Math.pow(2, (i + transposeOffsetPiano)/12);
+            let key = document.createElement('div');
+            key.className = 'black-key';
+            key.dataset.note = i;
+            
+            key.onmousedown = key.ontouchstart = (e) => {
+                e.preventDefault(); e.stopPropagation();
+                playPianoNote(freq, key);
+            };
+
+            let whiteKeysBefore = 0;
+            for(let j=0; j<i; j++) {
+                if(!notesBase[j % 12].includes('#')) whiteKeysBefore++;
+            }
+            
+            key.style.left = (whiteKeysBefore * whiteWidth) - 12 + "px";
+            container.appendChild(key);
+        }
+    }
+}
+
+// Keyboard Support
+document.addEventListener('keydown', (e) => {
+    if (e.repeat) return;
+    const k = e.key.toLowerCase();
+    let noteOffset = keyboardMap[k];
+    
+    if(noteOffset !== undefined) {
+        let i = noteOffset; 
+        let freq = 130.81 * Math.pow(2, (i + transposeOffsetPiano)/12);
+        let keyElem = document.querySelector(`[data-note="${i}"]`);
+        playPianoNote(freq, keyElem);
+    }
+});
+
+function createKalimba() {
+    const container = document.getElementById('kalimbaContainer');
+    container.innerHTML = "";
+    const majorScale = [0, 2, 4, 5, 7, 9, 11, 12, 14, 16, 17, 19, 21, 23, 24];
+    const labels = ["C", "D", "E", "F", "G", "A", "B", "C", "D", "E", "F", "G", "A", "B", "C"];
+    const baseFreq = 523.25;
+
+    for(let i=0; i < majorScale.length; i++){
+        let key = document.createElement("div");
+        key.className = "kalimba-key";
+        let freq = baseFreq * Math.pow(2, (majorScale[i] + transposeOffsetKalimba)/12);
+        
+        key.innerHTML = `<span>${labels[i]}</span>`;
+        key.onmousedown = key.ontouchstart = (e) => {
+            e.preventDefault(); playKalimbaNote(freq);
+        };
+        container.appendChild(key);
+    }
+}
+
+createPiano();
+createKalimba();
+createFloatingNotes(); // Jalankan animasi latar
+
+function transposePiano(change) {
+    transposeOffsetPiano += change;
+    document.getElementById("pianoTransposeVal").innerText = transposeOffsetPiano;
+    createPiano();
+}
+function transposeKalimba(change) {
+    transposeOffsetKalimba += change;
+    document.getElementById("kalimbaTransposeVal").innerText = transposeOffsetKalimba;
+    createKalimba();
+}
+
+// ===== SCROLL & DRAG LOGIC =====
+const pianoWrapper = document.getElementById('pianoWrapper');
+
+pianoWrapper.addEventListener('wheel', (e) => {
+    if (e.deltaY !== 0) {
+        e.preventDefault();
+        pianoWrapper.scrollLeft += e.deltaY;
+    }
+});
+
+let isDown = false;
+let startX;
+let scrollLeft;
+
+pianoWrapper.addEventListener('mousedown', (e) => {
+    isDown = true;
+    pianoWrapper.style.cursor = 'grabbing';
+    startX = e.pageX - pianoWrapper.offsetLeft;
+    scrollLeft = pianoWrapper.scrollLeft;
+});
+pianoWrapper.addEventListener('mouseleave', () => { isDown = false; pianoWrapper.style.cursor = 'grab'; });
+pianoWrapper.addEventListener('mouseup', () => { isDown = false; pianoWrapper.style.cursor = 'grab'; });
+pianoWrapper.addEventListener('mousemove', (e) => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x = e.pageX - pianoWrapper.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    pianoWrapper.scrollLeft = scrollLeft - walk;
+});
+
+
+// ===== MIXER & DRUMS =====
+function updateMixer() {
+    if (!audioCtx) return;
+    masterGain.gain.value = document.getElementById("masterVol").value;
+    
+    let reverbVal = document.getElementById("reverbMix").value;
+    dryGain.gain.value = 1; // Selalu penuh
+    wetGain.gain.value = reverbVal; // Kontrol seberapa besar "suara ruangan"
+}
+document.querySelectorAll('input[type="range"]').forEach(input => {
+    input.addEventListener('input', updateMixer);
+});
+
+function startBeat(){
+    stopBeat();
+    resumeAudio();
+    let bpm = document.getElementById("tempo").value;
+    let interval = (60/bpm)*1000;
+    let count = 0;
+
+    beatInterval = setInterval(()=>{
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        let now = audioCtx.currentTime;
+        
+        osc.connect(gain);
+        gain.connect(masterGain); 
+
+        osc.type = "triangle";
+        osc.frequency.value = count%4===0 ? 120 : 220; 
+        
+        gain.gain.setValueAtTime(document.getElementById("beatVol").value, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+        osc.start(now);
+        osc.stop(now + 0.15);
+        count++;
+    }, interval);
+}
+function stopBeat(){ clearInterval(beatInterval); }
+
+// ===== RECORDER =====
+async function startRecording(){
+    resumeAudio();
+    try {
+        let stream = await navigator.mediaDevices.getUserMedia({audio:true});
+        mediaRecorder = new MediaRecorder(stream);
+        recordedChunks = [];
+        mediaRecorder.ondataavailable = e => { if(e.data.size > 0) recordedChunks.push(e.data); };
+        mediaRecorder.start();
+        alert("Recording started...");
+    } catch (err) { alert("Mic access denied."); }
+}
+function stopRecording(){
+    if(mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+        mediaRecorder.onstop = () => {
+            audioBlob = new Blob(recordedChunks, {type:"audio/webm"});
+            alert("Recording Saved!");
+        };
+    }
+}
+function playRecording(){
+    if(!audioBlob){ alert("No recording!"); return; }
+    resumeAudio();
+    let audio = new Audio(URL.createObjectURL(audioBlob));
+    
+    // Connect playback to master volume
+    let source = audioCtx.createMediaElementSource(audio);
+    source.connect(masterGain);
+    
+    audio.play();
+}
+function downloadRecording(){
+    if(!audioBlob){ alert("No recording!"); return; }
+    let a = document.createElement("a");
+    a.href = URL.createObjectURL(audioBlob);
+    a.download = "mini_studio_song.webm";
+    a.click();
+}
+</script>
+</body>
+</html>
